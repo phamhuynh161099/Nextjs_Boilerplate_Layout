@@ -10,6 +10,8 @@ import roleApiRequest from "@/apis/role.api";
 import EditRolePopup from "./_components/edit-role.popup";
 import { useCurrentUser, useUserStore } from "@/stores/auth-store.zustand";
 import { checkPermissionApply } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import { Pencil } from "lucide-react";
 
 const PADDING_IN = 16;
 export default function page() {
@@ -206,26 +208,42 @@ export default function page() {
     <>
       <section className="h-full py-1 flex flex-col gap-2">
         <div className="h-25 w-full p-2 rounded-md shadow-md bg-white">
-          {checkPermissionApply(
-            currentUserInfor,
-            "role:search-main-filter",
-          ) && (
-            <>
-              <div className="flex flex-row gap-1">
-                <Input
-                  className="grow-0 w-fit"
-                  value={mainFilter.division}
-                  onChange={(e) =>
-                    setMainFilter((prev) => ({
-                      ...prev,
-                      division: e.target.value,
-                    }))
-                  }
-                />
-                <Button onClick={() => setForce(!force)}>Force Refresh</Button>
-              </div>
-            </>
-          )}
+          <div className="overflow-x-scroll md:overflow-hidden w-[calc(100vw-2rem)] md:w-auto flex md:flex-wrap gap-2 pb-1">
+            {checkPermissionApply(
+              currentUserInfor,
+              "role:search-main-filter",
+            ) && (
+              <>
+                <div className="flex flex-row gap-1">
+                  <Input
+                    className="grow-0 w-fit"
+                    value={mainFilter.division}
+                    onChange={(e) =>
+                      setMainFilter((prev) => ({
+                        ...prev,
+                        division: e.target.value,
+                      }))
+                    }
+                  />
+                  <Button onClick={() => setForce(!force)}>
+                    Force Refresh
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+
+          <Separator />
+
+          <div className="overflow-x-scroll md:overflow-hidden w-[calc(100vw-2rem)] md:w-auto flex justify-end md:flex-wrap gap-2 py-1">
+            <div>
+              <Button
+                className=""
+              >
+                <Pencil /> Add New Role
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div
