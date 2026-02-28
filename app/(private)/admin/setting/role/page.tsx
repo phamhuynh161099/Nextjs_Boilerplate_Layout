@@ -7,6 +7,9 @@ import { reactFormatter } from "react-tabulator";
 import "../../../../../public/css/test-tabulator/custom.css";
 import Script from "next/script";
 import roleApiRequest from "@/apis/role.api";
+import EditRolePopup from "./_components/edit-role.popup";
+import { useCurrentUser, useUserStore } from "@/stores/auth-store.zustand";
+import { checkPermissionApply } from "@/lib/utils";
 
 const PADDING_IN = 16;
 export default function page() {
@@ -14,6 +17,7 @@ export default function page() {
   const tableRef = useRef(null);
   const [force, setForce] = useState<boolean>(false);
   const tableInstanceRef = useRef<any>(null);
+  const currentUserInfor = useCurrentUser();
 
   const [tablePointScroll, setTablePointScroll] = useState<{
     x: number;
@@ -24,21 +28,51 @@ export default function page() {
     division: "HWA",
   });
 
+  /**
+   ** Data cho popup role
+   */
+  const [dataChoosedRole, setDataChoosedRole] = useState<any>();
+  /**
+   * State quản lý bật tắt popup edit role
+   */
+  const [openRoleEditDialog, setOpenRoleEditDialog] = useState<boolean>(false);
+
   //* React Tablutor
   const GenerateTablutorButton = (props: any) => {
     const rowData = props.cell._cell.row.data;
     const handleClickDelete = () => {
-      console.log(">>>rowData", rowData);
+      // console.log(">>>rowData", rowData);
+    };
+
+    const handleClickEdit = () => {
+      // console.log(">>>rowata", rowData);
+      setDataChoosedRole(rowData);
+      setOpenRoleEditDialog(true);
     };
 
     return (
       <>
-        <button
-          className="ml-1 px-2 bg-red-500 rounded-sm cursor-pointer"
-          onClick={() => handleClickDelete()}
-        >
-          Delete
-        </button>
+        {checkPermissionApply(currentUserInfor, "role:update") && (
+          <>
+            <button
+              className="ml-1 px-2 bg-green-500 rounded-sm cursor-pointer"
+              onClick={() => handleClickEdit()}
+            >
+              Edit
+            </button>
+          </>
+        )}
+
+        {checkPermissionApply(currentUserInfor, "role:delete") && (
+          <>
+            <button
+              className="ml-1 px-2 bg-red-500 rounded-sm cursor-pointer"
+              onClick={() => handleClickDelete()}
+            >
+              Delete
+            </button>
+          </>
+        )}
       </>
     );
   };
@@ -65,21 +99,9 @@ export default function page() {
     },
     {
       formatter: reactFormatter(<GenerateTablutorButton />),
-      width: 100,
+      width: 150,
       hozAlign: "center",
     },
-    // {
-    //   title: "MATERIAL CATEGORY",
-    //   field: "material_category",
-    //   hozAlign: "left",
-    //   width: 160,
-    //   // editor: "input",
-    //   // editable: true,
-    //   //* filter dạng select
-    //   headerFilter: "list" as any,
-    //   headerFilterParams: { valuesLookup: true, clearable: true } as any,
-    //   //*
-    // },
   ];
 
   const initializeTable = () => {
@@ -102,7 +124,7 @@ export default function page() {
         paginationSize: 6,
         paginationSizeSelector: [3, 6, 8, 10],
 
-        selectableRows: true,
+        // selectableRows: true,
       });
 
       table.on("headerTap", function (e: any, column: any) {
@@ -134,7 +156,7 @@ export default function page() {
   }, []);
 
   /**
-   ** Call Api
+   ** Call Api get all role
    */
   useEffect(() => {
     const fetchData = async () => {
@@ -143,7 +165,6 @@ export default function page() {
 
         const payload = await roleApiRequest.sGetAll(parameter); // placeholder
         const { data } = payload.payload;
-        console.log(">>>data", data);
         tableInstanceRef.current.replaceData(data);
       } catch (error) {
         console.error("error", error);
@@ -177,23 +198,34 @@ export default function page() {
     };
   }, []); // Chạy 1 lần khi mount
 
+  useEffect(() => {
+    console.log("updateUserInfor", currentUserInfor);
+  }, [currentUserInfor]);
+
   return (
     <>
       <section className="h-full py-1 flex flex-col gap-2">
         <div className="h-25 w-full p-2 rounded-md shadow-md bg-white">
-          <div className="flex flex-row gap-1">
-            <Input
-              className="grow-0 w-fit"
-              value={mainFilter.division}
-              onChange={(e) =>
-                setMainFilter((prev) => ({
-                  ...prev,
-                  division: e.target.value,
-                }))
-              }
-            />
-            <Button onClick={() => setForce(!force)}>Force Refresh</Button>
-          </div>
+          {checkPermissionApply(
+            currentUserInfor,
+            "role:search-main-filter",
+          ) && (
+            <>
+              <div className="flex flex-row gap-1">
+                <Input
+                  className="grow-0 w-fit"
+                  value={mainFilter.division}
+                  onChange={(e) =>
+                    setMainFilter((prev) => ({
+                      ...prev,
+                      division: e.target.value,
+                    }))
+                  }
+                />
+                <Button onClick={() => setForce(!force)}>Force Refresh</Button>
+              </div>
+            </>
+          )}
         </div>
 
         <div
@@ -204,6 +236,18 @@ export default function page() {
           <div ref={tableRef} className=""></div>
         </div>
       </section>
+
+      {/* popup edit row */}
+      {dataChoosedRole && (
+        <EditRolePopup
+          data={dataChoosedRole}
+          open={openRoleEditDialog}
+          onOpenChange={(value: boolean, needRefresh: boolean) => {
+            setOpenRoleEditDialog(value);
+            needRefresh && setForce((prev) => !prev);
+          }}
+        />
+      )}
     </>
   );
 }
