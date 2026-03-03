@@ -7,12 +7,15 @@ import { reactFormatter } from "react-tabulator";
 import "../../../../../public/css/test-tabulator/custom.css";
 import Script from "next/script";
 import roleApiRequest from "@/apis/role.api";
-import EditRolePopup from "./_components/edit-role.popup";
+// import EditRolePopup from "./_components/edit-role.popup";
 import { useCurrentUser, useUserStore } from "@/stores/auth-store.zustand";
 import { checkPermissionApply } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Pencil } from "lucide-react";
-import AddRolePopup from "./_components/add-role.popup";
+import userApiRequest from "@/apis/user.api";
+import AddUserPopup from "./_components/add-user.popup";
+import EditUserPopup from "./_components/edit-user.popup";
+// import AddRolePopup from "./_components/add-role.popup";
 
 const PADDING_IN = 16;
 export default function page() {
@@ -32,17 +35,17 @@ export default function page() {
   });
 
   /**
-   ** Data cho popup role
+   ** Data cho popup user
    */
-  const [dataChoosedRole, setDataChoosedRole] = useState<any>();
+  const [dataChoosedUser, setDataChoosedUser] = useState<any>();
   /**
-   * State quản lý bật tắt popup edit role
+   * State quản lý bật tắt popup edit user
    */
-  const [openRoleEditDialog, setOpenRoleEditDialog] = useState<boolean>(false);
+  const [openUserEditDialog, setOpenUserEditDialog] = useState<boolean>(false);
   /**
-   * State quản lý bật tắt popup add role
+   * State quản lý bật tắt popup add user
    */
-  const [openRoleAddDialog, setOpenRoleAddDialog] = useState<boolean>(false);
+  const [openUserAddDialog, setOpenUserAddDialog] = useState<boolean>(false);
 
   //* React Tablutor
   const GenerateTablutorButton = (props: any) => {
@@ -53,8 +56,8 @@ export default function page() {
 
     const handleClickEdit = () => {
       // console.log(">>>rowata", rowData);
-      setDataChoosedRole(rowData);
-      setOpenRoleEditDialog(true);
+      setDataChoosedUser(rowData);
+      setOpenUserEditDialog(true);
     };
 
     return (
@@ -85,8 +88,8 @@ export default function page() {
   };
   let columns = [
     {
-      title: "ROLENAME",
-      field: "name",
+      title: "USERNAME",
+      field: "username",
       hozAlign: "left",
       width: 160,
       //* filter dạng select
@@ -95,8 +98,28 @@ export default function page() {
       //*
     },
     {
-      title: "DESCRIPTION",
-      field: "description",
+      title: "EMAIL",
+      field: "email",
+      hozAlign: "left",
+      width: 160,
+
+      headerFilter: "input",
+      // editor: "input",
+      // editable: true,
+    },
+    {
+      title: "ROLE",
+      field: "arrRole",
+      hozAlign: "left",
+      width: 160,
+
+      headerFilter: "input",
+      // editor: "input",
+      // editable: true,
+    },
+    {
+      title: "PERMISION",
+      field: "arrPermission",
       hozAlign: "left",
       width: 160,
 
@@ -170,10 +193,28 @@ export default function page() {
       try {
         let parameter = {};
 
-        const payload = await roleApiRequest.sGetAll(parameter); // placeholder
+        const payload = await userApiRequest.sGetAllUser(parameter); // placeholder
         const { data } = payload.payload;
 
-        tableInstanceRef.current.replaceData(data);
+        // 🐱‍🏍 Pre handle data
+        let handledData = [];
+        for (let idx = 0; idx < data.length; idx++) {
+          const item = data[idx];
+
+          if (item.roles.length > 0) {
+            let arrRoles:string[] = [];
+            for (let idxRole = 0; idxRole < item.roles.length; idxRole++) {
+              const role = item.roles[idxRole];
+              arrRoles.push(role.name);
+            }
+            item["arrRole"] = arrRoles.join(",");
+          }
+
+          handledData.push(item);
+        }
+        // 🐱‍🏍 Pre handle data
+
+        tableInstanceRef.current.replaceData(handledData);
       } catch (error) {
         console.error("error", error);
       } finally {
@@ -243,7 +284,7 @@ export default function page() {
 
           <div className="overflow-x-scroll md:overflow-hidden w-[calc(100vw-2rem)] md:w-auto flex justify-end md:flex-wrap gap-2 py-1">
             <div>
-              <Button className="" onClick={() => setOpenRoleAddDialog(true)}>
+              <Button className="" onClick={() => setOpenUserAddDialog(true)}>
                 <Pencil /> Add New Role
               </Button>
             </div>
@@ -260,21 +301,21 @@ export default function page() {
       </section>
 
       {/* popup edit row */}
-      {dataChoosedRole && (
-        <EditRolePopup
-          data={dataChoosedRole}
-          open={openRoleEditDialog}
+      {dataChoosedUser && (
+        <EditUserPopup
+          data={dataChoosedUser}
+          open={openUserEditDialog}
           onOpenChange={(value: boolean, needRefresh: boolean) => {
-            setOpenRoleEditDialog(value);
+            setOpenUserEditDialog(value);
             needRefresh && setForce((prev) => !prev);
           }}
         />
       )}
 
-      <AddRolePopup
-        open={openRoleAddDialog}
+      <AddUserPopup
+        open={openUserAddDialog}
         onOpenChange={(value: boolean, needRefresh: boolean) => {
-          setOpenRoleAddDialog(value);
+          setOpenUserAddDialog(value);
           needRefresh && setForce((prev) => !prev);
         }}
       />

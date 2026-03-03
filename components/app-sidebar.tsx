@@ -169,6 +169,12 @@ const data = {
           isDisplay: false,
           guard: ["role:read"],
         },
+        {
+          title: "User Management",
+          url: "/admin/setting/user",
+          isDisplay: false,
+          guard: ["user:read"],
+        },
       ],
     },
   ],

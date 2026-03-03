@@ -61,83 +61,45 @@ interface IPermision {
   category: string;
 }
 
-interface IEditRolePopupProps {
+interface IAddRolePopupProps {
   open: boolean;
-  data: any;
-  // Truyền vào mảng id hoặc name của permission đã có
-  // Ví dụ: defaultPermissionIds={[1, 3, 5]} hoặc defaultPermissionNames={["user:read", "role:read"]}
-  defaultPermissionIds?: number[];
-  defaultPermissionNames?: string[];
   onOpenChange: (value: boolean, needRefresh: boolean) => void;
 }
 
-const EditRolePopup = ({
+const AddRolePopup = ({
   open,
-  data,
-  defaultPermissionIds,
-  defaultPermissionNames,
   onOpenChange,
-}: IEditRolePopupProps) => {
+}: IAddRolePopupProps) => {
   const router = useRouter();
   const { zStartLoading, zEndLoading } = useLoadingStore();
-  const [showPassword, setShowPassword] = useState(false);
-  const [dataEdit, setDataEdit] = useState<any>(data);
+  const [dataAdd, setDataAdd] = useState<any>({
+    roleId: "",
+    permissionIds: [],
+    name: "",
+    description: [],
+  });
   const [permissions, setPermissions] = useState<IPermision[]>([]);
   const currentUserInfor = useCurrentUser();
 
   //🧨 Khởi tạo selected từ defaultPermissionIds hoặc defaultPermissionNames
   const [selected, setSelected] = useState<Set<number>>(() => {
-    if (defaultPermissionIds?.length) {
-      return new Set(defaultPermissionIds);
-    }
-    if (defaultPermissionNames?.length) {
-      const ids = permissions
-        .filter((p) => defaultPermissionNames.includes(p.name))
-        .map((p) => p.id);
-      return new Set(ids);
-    }
     return new Set();
   });
 
   useEffect(() => {
-    setDataEdit(data);
-
     const fetchGetAllPermission = async () => {
       try {
         const payload = await permissionApiRequest.sGetAll({});
         const permissionData = payload.payload;
         setPermissions(permissionData.data);
-
-        /**
-         * Lấy permission id from row data
-         */
-        let permsionId = [];
-        for (let idx = 0; idx < data?.permissions.length; idx++) {
-          const item = data?.permissions[idx];
-          permsionId.push(item.id);
-        }
-        setSelected(new Set(permsionId));
+        setSelected(new Set());
       } catch (error) {
         console.error("[System] get All permission failed:", error);
       }
     };
 
     fetchGetAllPermission();
-  }, [data]);
-
-  // ✅ Reset selected khi data thay đổi (mở popup với role khác)
-  useEffect(() => {
-    if (defaultPermissionIds?.length) {
-      setSelected(new Set(defaultPermissionIds));
-    } else if (defaultPermissionNames?.length) {
-      const ids = permissions
-        .filter((p) => defaultPermissionNames.includes(p.name))
-        .map((p) => p.id);
-      setSelected(new Set(ids));
-    } else {
-      setSelected(new Set());
-    }
-  }, [data, defaultPermissionIds, defaultPermissionNames]);
+  }, []);
 
   const onClickSubmitForm = async () => {
     try {
@@ -147,12 +109,12 @@ const EditRolePopup = ({
       console.log("selectedPermissions", selected);
 
       const parameter = {
-        roleId: dataEdit["id"],
+        roleId: dataAdd["id"],
         permissionIds: [...selected],
-        name: dataEdit["name"],
-        description: dataEdit["description"],
+        name: dataAdd["name"],
+        description: dataAdd["description"],
       };
-      let res = await roleApiRequest.sUpdateRole(parameter);
+      let res = await roleApiRequest.sAddRole(parameter);
 
       console.log("res", res);
     } catch (error) {
@@ -163,7 +125,7 @@ const EditRolePopup = ({
     }
   };
 
-  // Group by category
+  //👀 Group by category
   const grouped = permissions.reduce(
     (acc, p) => {
       if (!acc[p.category]) acc[p.category] = [];
@@ -205,6 +167,7 @@ const EditRolePopup = ({
       return next;
     });
   };
+  //👀 Group by category
 
   return (
     <Dialog open={open} onOpenChange={() => onOpenChange(false, false)}>
@@ -218,7 +181,7 @@ const EditRolePopup = ({
               <div className="border rounded-md p-2 shadow-md shadow-sky-200">
                 <TableProperties className="size-6" />
               </div>
-              Role Edit
+              Role Add
             </div>
           </DialogTitle>
           <DialogDescription className="hidden" />
@@ -227,26 +190,26 @@ const EditRolePopup = ({
         <Separator className="bg-black" />
 
         <div className="no-scrollbar -mx-4 max-h-[60vh] overflow-y-auto px-4 pb-4">
-          {dataEdit && (
+          {dataAdd && (
             <div className="p-1 overflow-y-auto max-h-[calc(100vh-200px)]">
               <div className="grid w-full items-center gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div className="flex flex-col space-y-1.5">
+                  {/* <div className="flex flex-col space-y-1.5">
                     <Label>
                       Role Id<span className="text-red-600">(*)</span>
                     </Label>
                     <Input
                       disabled
-                      defaultValue={dataEdit["id"]}
+                      defaultValue={dataAdd["id"]}
                       className="bg-slate-200 text-red-700 disabled:opacity-100 font-bold"
                     />
-                  </div>
+                  </div> */}
                   <div className="flex flex-col space-y-1.5">
                     <Label>Role Name</Label>
                     <Input
-                      defaultValue={dataEdit["name"]}
+                      defaultValue={dataAdd["name"]}
                       onChange={(e) =>
-                        setDataEdit((prev: any) => ({
+                        setDataAdd((prev: any) => ({
                           ...prev,
                           name: e.target.value,
                         }))
@@ -259,9 +222,9 @@ const EditRolePopup = ({
 
                     <Textarea
                       placeholder="Type your message here."
-                      defaultValue={dataEdit["description"]}
+                      defaultValue={dataAdd["description"]}
                       onChange={(e) =>
-                        setDataEdit((prev: any) => ({
+                        setDataAdd((prev: any) => ({
                           ...prev,
                           description: e.target.value,
                         }))
@@ -374,4 +337,4 @@ const EditRolePopup = ({
   );
 };
 
-export default EditRolePopup;
+export default AddRolePopup;
