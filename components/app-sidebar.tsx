@@ -179,6 +179,25 @@ const data = {
     },
   ],
 
+  // Course
+  navCourse: [
+    {
+      title: "Video",
+      url: "#",
+      icon: SquareTerminal,
+      isActive: false,
+      isDisplay: false,
+      items: [
+        {
+          title: "Management",
+          url: "/admin/course/video-management",
+          isDisplay: false,
+          guard: ["video-management:read"],
+        },
+      ],
+    },
+  ],
+
   projects: [
     {
       name: "Design Engineering",
@@ -208,6 +227,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} nameCategory="Overall" />
         <NavMain items={data.navME} nameCategory="ME" />
         <NavMain items={data.navPDM} nameCategory="PDM" />
+        <NavMain items={data.navCourse} nameCategory="Course" />
         <NavMain items={data.navSetting} nameCategory="Setting (Root Admin)" />
         <NavProjects projects={data.projects} />
       </SidebarContent>
